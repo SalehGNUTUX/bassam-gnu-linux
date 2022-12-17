@@ -1,4 +1,4 @@
-# nativefier-appimage
+# bassam-appimage
 
  A tool to generate AppImages of a website using nativefier.
  
