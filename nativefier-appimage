@@ -1,0 +1,106 @@
+#!/bin/bash
+
+#############################################################################################################################################################################
+#   The license used for this file and its contents is: BSD-3-Clause                                                                                                        #
+#                                                                                                                                                                           #
+#   Copyright <2020> <Anupam Basak <anupam.basak27@nxos.org>>                                                                                                               #
+#                                                                                                                                                                           #
+#   Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:                          #
+#                                                                                                                                                                           #
+#    1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.                                        #
+#                                                                                                                                                                           #
+#    2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer                                      #
+#       in the documentation and/or other materials provided with the distribution.                                                                                         #
+#                                                                                                                                                                           #
+#    3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software                    #
+#       without specific prior written permission.                                                                                                                          #
+#                                                                                                                                                                           #
+#    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,                      #
+#    THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS                  #
+#    BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE                 #
+#    GOODS OR SERVICES; LOSS OF USE, DATA,   OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,                      #
+#    STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.   #
+#############################################################################################################################################################################
+
+set -x
+
+SCRIPTPATH="$(
+  cd "$(dirname "$0")" >/dev/null 2>&1
+  pwd -P
+)"
+
+###
+# Arg 1 : Command
+# Arg 2 : Install script
+###
+print_cmd_error() {
+  printf "Command not found : $1\n"
+  [ ! -z "$2" ] && printf "Run this command to install : $2\n"
+
+  exit 1
+}
+
+if ! command -v npx &>/dev/null; then
+  print_cmd_error "npx"
+fi
+
+HELPTEXT="Usage :
+  $0 <name> <url> <icon> -- [extra nativefier options]
+
+  <name> : Name of the application
+  <url>  : Url of the webpage to package
+  <icon> : Icon of the appimage"
+
+opts=$(echo $@ | awk -F ' -- ' '{print $1}')
+extra_nativefier_opts=$(echo $@ | awk -F ' -- ' '{print $2}')
+
+name=$(echo $opts | cut -d ' ' -f 1)
+url=$(echo $opts | cut -d ' ' -f 2)
+icon=$(echo $opts | cut -d ' ' -f 3)
+
+if [ -z "$name" -o -z "$url" -o -z "$icon" ]; then
+  printf "$HELPTEXT\n"
+  exit 1
+fi
+
+(
+  if [ -d "$name.AppDir" ]; then
+    printf "WARNING : \`$name.AppDir\` directory already exists. Re-using AppDir\n"
+  else
+    npx nativefier -n "$name" -p linux "$url" $extra_nativefier_opts
+    mv "$name"-linux-* "$name.AppDir"
+  fi
+
+  cd "$name".AppDir/  
+  
+  iconname=$(basename $icon | cut -d '?' -f 1)
+
+  if [[ $icon = http* ]]; then
+    printf "Downloading $iconname : $icon\n"
+    wget -q -nv -O $iconname $icon &> /dev/null
+  elif [ -e $icon ]; then
+    printf "Copying $iconname : $icon\n"
+    cp $icon ./$iconname
+  else
+    printf "ERROR : Invalid icon url / path. Please provide a http link or a local path"
+    exit 1
+  fi
+  
+  echo "[Desktop Entry]" > $name.desktop
+  echo "Name=$name" >> $name.desktop
+  echo "Exec=AppRun %U" >> $name.desktop
+  echo "Terminal=false" >> $name.desktop
+  echo "Type=Application" >> $name.desktop
+  echo "Icon=${iconname%.*}" >> $name.desktop
+  echo "X-AppImage-Version=1.0.0" >> $name.desktop
+  echo "Categories=Utility;" >> $name.desktop
+  
+  echo "#!/bin/bash" > AppRun
+  echo "exec \$APPDIR/$name" >> AppRun
+  chmod +x ./AppRun
+)
+
+[ ! -e /tmp/appimagetool ] && wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /tmp/appimagetool
+chmod +x /tmp/appimagetool
+
+/tmp/appimagetool "$name.AppDir"
