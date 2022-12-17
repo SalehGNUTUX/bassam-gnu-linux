@@ -1,6 +1,9 @@
 # bassam-appimage
 
- A tool to generate AppImages of a website using nativefier.
+ 
+بسّام موقع تواصل اجتماعي عربي حر على شبكة الإتحاد العالمية
+
+Bassam is a free Arabic social networking site on the global network social media fediverse
  
 ```
 Usage :
