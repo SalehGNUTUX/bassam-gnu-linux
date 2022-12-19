@@ -1,29 +1,56 @@
-# bassam-appimage
+# bassam.social desktop 
 
- 
-بسّام موقع تواصل اجتماعي عربي حر على شبكة الإتحاد العالمية
+![bassam](/build/logo.png)
+<br>
+
+سّام موقع تواصل اجتماعي عربي حر على شبكة الإتحاد العالمية </p>
 
 Bassam is a free Arabic social networking site on the global network social media fediverse
- 
+
+</p>
+
+# download 
+
+<a href="https://snapcraft.io/bassam-social">
+  <img alt="Get it from the Snap Store" src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" />
+</a>
+
+<br>
+
+```bash 
+sudo snap install bassam-social
 ```
-Usage :
-    nativefier-appimage <name> <url> -- [extra nativefier options]
 
-    <name> : Name of the application
-    <url>  : Url of the webpage to package
+
+- **Linux**: [Download the .AppImage, .deb, or .rpm file](https://github.com/SalehGNUTUX/bassam-gnu-linux/releases/latest)
+- **Windows**: [Download the .exe file](https://github.com/SalehGNUTUX/bassam-gnu-linux/releases/latest)
+
+<br><br>
+
+# Run the application in development mode
+
+**Requirements**
+
+- nodejs
+
+- git
+
+```bash
+git clone https://github.com/SalehGNUTUX/bassam-gnu-linux
+cd bassam-gnu-linux
+npm i
+npm run dev
 ```
 
-# Examples
+<br>
 
+ **build**
+
+<br>
+
+```bash
+#Windows
+npm run packwin
+#Linux
+npm run packlinux
 ```
-nativefier-appimage Nitrux https://nxos.org
-nativefier-appimage pine64 https://pine64.com -- --min-width 1500 --min-height 1000
-```
-
-# Requirements
-- npm.
-
-# Issues
-If you find problems with the contents of this repository please create an issue.
-
-©2020 Nitrux Latinoamericana S.C.
