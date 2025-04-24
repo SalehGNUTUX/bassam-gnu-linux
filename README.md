@@ -3,7 +3,7 @@
 ![bassam](/build/logo.png)
 <br>
 
-سّام موقع تواصل اجتماعي عربي حر على شبكة الإتحاد العالمية </p>
+بَسَّام موقع تواصل اجتماعي عربي حر على شبكة الإتحاد العالمية </p>
 
 Bassam is a free Arabic social networking site on the global network social media fediverse
 
