@@ -1,0 +1,41 @@
+# Mirror to Codeberg
+# يُنسخ إلى: .github/workflows/codeberg-mirror.yml في كل مستودع GitHub
+# يحتاج Secret: CODEBERG_TOKEN  (يُضاف تلقائياً عبر codeberg_workflow_install.sh)
+name: Mirror to Codeberg
+
+on:
+  push:
+    branches: ['**']
+    tags: ['**']
+  delete:
+  workflow_dispatch:
+
+concurrency:
+  group: codeberg-mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history + all refs)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch all refs
+        run: |
+          git fetch --prune --tags origin '+refs/heads/*:refs/heads/*' || true
+
+      - name: Push mirror to Codeberg
+        env:
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+          CODEBERG_USER: gnutux
+        run: |
+          if [ -z "$CODEBERG_TOKEN" ]; then
+            echo "::error::CODEBERG_TOKEN secret is missing"
+            exit 1
+          fi
+          REPO_NAME="${GITHUB_REPOSITORY##*/}"
+          git remote add codeberg "https://${CODEBERG_USER}:${CODEBERG_TOKEN}@codeberg.org/${CODEBERG_USER}/${REPO_NAME}.git"
+          git push --mirror codeberg
