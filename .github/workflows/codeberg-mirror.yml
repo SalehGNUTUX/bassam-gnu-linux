@@ -1,4 +1,4 @@
-# Mirror to Codeberg
+# مرآة إلى Codeberg
 # يُنسخ إلى: .github/workflows/codeberg-mirror.yml في كل مستودع GitHub
 # يحتاج Secret: CODEBERG_TOKEN  (يُضاف تلقائياً عبر codeberg_workflow_install.sh)
 name: Mirror to Codeberg
@@ -18,14 +18,12 @@ jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
+      # fetch-depth: 0 يجلب كلّ الفروع والوسوم؛ الفروع تحت refs/remotes/origin/*
+      # ولا يُنشأ تحت refs/heads/ إلّا الفرع المدفوع وحده.
       - name: Checkout (full history + all refs)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Fetch all refs
-        run: |
-          git fetch --prune --tags origin '+refs/heads/*:refs/heads/*' || true
 
       - name: Push mirror to Codeberg
         env:
@@ -38,4 +36,15 @@ jobs:
           fi
           REPO_NAME="${GITHUB_REPOSITORY##*/}"
           git remote add codeberg "https://${CODEBERG_USER}:${CODEBERG_TOKEN}@codeberg.org/${CODEBERG_USER}/${REPO_NAME}.git"
-          git push --mirror codeberg
+
+          # لو وُجد origin/HEAD لأُنشئ في الوجهة فرعٌ اسمه HEAD.
+          git update-ref -d refs/remotes/origin/HEAD 2>/dev/null || true
+
+          # تُدفَع الفروع من refs/remotes/origin/* لا من refs/heads/: الأخير لا يحمل
+          # إلّا الفرع المدفوع، و`git push --mirror` حينها يعني «احذف كلّ فرعٍ سواه».
+          # وهو ما كان يقع فعلاً: دفعةٌ إلى main تحذف work من Codeberg صامتةً، ودفعةٌ
+          # إلى work تُرفَض كلّها لأنّ Forgejo يأبى حذف الفرع الافتراضيّ.
+          # و--prune يُبقي معنى المرآة: ما زال محذوفاً في المصدر يُحذَف في الوجهة.
+          git push --prune codeberg \
+            "+refs/remotes/origin/*:refs/heads/*" \
+            "+refs/tags/*:refs/tags/*"
